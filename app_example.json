@@ -1,0 +1,13 @@
+{
+    "environments": {
+        "review": {
+            "addons": [
+                "heroku-postgresql:hobby-basic",
+                "heroku-redis:hobby-dev"
+            ],
+            "scripts": {
+                "postdeploy": "python manage.py showmigrations"
+            }
+        }
+    }
+}

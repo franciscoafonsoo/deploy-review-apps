@@ -1,0 +1,52 @@
+## General Information:
+
+# minimal config: 1 pipelines, 1 step, 1 script
+# 4GB memory for each step
+# single pipeline < 100 steps
+# each step runs a separate Docker container
+
+## Testing before deploys (commented out)
+
+# when running tests before the deploys, this should be the image used:
+image: python:3.6.8
+
+
+pipelines:
+    pull-requests:
+        feature/*:
+            - step:
+                image: python:3.8.0
+                name: Deploy a new Review App
+                caches:
+                  - pip
+                script:
+                    - pip install python-dotenv requests
+                    - cd deploy
+                    - ./deploy_review_app.py
+                artifacts:
+                    - env.sh
+            - step:
+                image: wingrunr21/alpine-heroku-cli
+                name: Copy Database data
+                script:
+                    - source env.sh
+                    - heroku pg:copy water-web-development::DATABASE_URL DATABASE_URL -a HEROKU_APP_NAME --confirm HEROKU_APP_NAME
+    branches:
+    # Defines a section for all branch-specific build pipelines
+        development:
+            - step:
+                deployment: heroku_development
+                caches:
+                    - pip
+                script:
+                    # - py.test --disable-pytest-warnings
+                    - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_DEV_NAME.git HEAD:master
+
+        staging:
+            - step:
+                deployment: heroku_staging
+                caches:
+                    - pip
+                script:
+                    # - py.test --disable-pytest-warnings
+                    - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_STAGING_NAME.git HEAD:master
